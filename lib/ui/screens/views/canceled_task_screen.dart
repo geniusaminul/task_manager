@@ -34,7 +34,9 @@ class _CanceledTaskScreenState extends State<CanceledTaskScreen> {
           child: ListView.builder(
             itemCount: cancelTaskList.length,
             itemBuilder: (context, index) {
-              return TaskItem(taskListModel: cancelTaskList[index]);
+              return TaskItem(taskListModel: cancelTaskList[index], onUpdateTask: () {
+                _cancelTaskList();
+              },);
             },
           ),
         ),

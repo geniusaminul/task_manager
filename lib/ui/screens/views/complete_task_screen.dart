@@ -18,6 +18,7 @@ class CompleteTaskScreen extends StatefulWidget {
 class _CompleteTaskScreenState extends State<CompleteTaskScreen> {
   bool _completedInProgress = false;
   List<TaskListModel> completeTaskList = [];
+
   @override
   void initState() {
     super.initState();
@@ -31,38 +32,45 @@ class _CompleteTaskScreenState extends State<CompleteTaskScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Visibility(
           visible: _completedInProgress == false,
-          replacement: const Center(child: CircularProgressIndicator(),),
+          replacement: const Center(
+            child: CircularProgressIndicator(),
+          ),
           child: ListView.builder(
             itemCount: completeTaskList.length,
             itemBuilder: (context, index) {
-              return TaskItem(taskListModel: completeTaskList[index]);
+              return TaskItem(
+                taskListModel: completeTaskList[index],
+                onUpdateTask: () {
+                  _completedTaskList();
+                },
+              );
             },
           ),
         ),
       ),
     );
   }
-  Future<void> _completedTaskList() async{
-    _completedInProgress = true;
-    if(mounted){
-      setState(() {
 
-      });
+  Future<void> _completedTaskList() async {
+    _completedInProgress = true;
+    if (mounted) {
+      setState(() {});
     }
-    NetworkResponse response = await NetworkCaller.getRequest(Urls.completedTask);
-    if(response.isSuccess){
-      TaskModelWrapper taskModelWrapper = TaskModelWrapper.fromJson(response.responseData);
+    NetworkResponse response =
+        await NetworkCaller.getRequest(Urls.completedTask);
+    if (response.isSuccess) {
+      TaskModelWrapper taskModelWrapper =
+          TaskModelWrapper.fromJson(response.responseData);
       completeTaskList = taskModelWrapper.taskListModel ?? [];
-    }else{
-      if(mounted){
-        showSnackBarMessage(context, response.errorMessage ?? 'Get Cancel Task Failed! try again');
+    } else {
+      if (mounted) {
+        showSnackBarMessage(context,
+            response.errorMessage ?? 'Get Cancel Task Failed! try again');
       }
     }
     _completedInProgress = false;
-    if(mounted){
-      setState(() {
-
-      });
+    if (mounted) {
+      setState(() {});
     }
   }
 }
