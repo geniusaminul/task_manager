@@ -59,15 +59,21 @@ class _TaskItemState extends State<TaskItem> {
                     widget.taskListModel.status ?? 'New',
                     style: const TextStyle(
                         fontWeight: FontWeight.w500,
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Colors.white),
                   ),
-                  backgroundColor: Colors.cyan,
+                  backgroundColor: (widget.taskListModel.status == 'Completed')
+                      ? AppColors.completeTaskColor
+                      : (widget.taskListModel.status == 'Progress')
+                          ? AppColors.progressTaskColor
+                          : (widget.taskListModel.status == 'Cancel')
+                              ? AppColors.cancelTaskColor
+                              : AppColors.newTaskColor,
                   shape: RoundedRectangleBorder(
-                      side: const BorderSide(color: Colors.cyan),
+                      side: const BorderSide(color: Colors.transparent),
                       borderRadius: BorderRadius.circular(30)),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
                 ),
                 ButtonBar(
                   children: [
@@ -75,7 +81,7 @@ class _TaskItemState extends State<TaskItem> {
                       visible: _updateTaskInProgress == false,
                       replacement: circularProgressIndicator(),
                       child: PopupMenuButton(
-                          icon: const Icon(Icons.edit),
+                          icon: const Icon(Icons.edit, color:AppColors.themeColor ,),
                           onSelected: (String selectedValue) {
                             dropdownValue = selectedValue;
                             _updateTask(dropdownValue);
