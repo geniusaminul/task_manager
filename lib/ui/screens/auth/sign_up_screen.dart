@@ -1,12 +1,13 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:task_manager_assignment/data/model/network_response.dart';
-import 'package:task_manager_assignment/data/network_caller/network_caller.dart';
+import 'package:get/get.dart';
+import 'package:task_manager_assignment/ui/controller/sign_up_controller.dart';
+import 'package:task_manager_assignment/ui/screens/auth/sign_in_screen.dart';
 import 'package:task_manager_assignment/ui/utilities/app_constant.dart';
 import 'package:task_manager_assignment/ui/widget/background_widget.dart';
 import 'package:task_manager_assignment/ui/widget/snack_bar_message.dart';
 
-import '../../../data/utilities/urls.dart';
+
 import '../../utilities/app_colors.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -24,7 +25,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordTEController = TextEditingController();
   final GlobalKey<FormState> _globalKey = GlobalKey<FormState>();
   bool _showPassword = false;
-  bool _signUpInprogress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -146,14 +146,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       height: 16,
                     ),
                     Visibility(
-                      visible: _signUpInprogress == false,
+                      visible: Get.find<SignUpController>().signUpProgress == false,
                       replacement: const Center(
                         child: CircularProgressIndicator(),
                       ),
                       child: ElevatedButton(
                           onPressed: () {
                             if (_globalKey.currentState!.validate()) {
-                              _signUp();
+                             _onTapSignUp();
                             }
                           },
                           child: const Icon(Icons.arrow_circle_right_outlined)),
@@ -184,7 +184,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       color: AppColors.textColor, fontWeight: FontWeight.w600),
                   children: [
                 TextSpan(
-                    recognizer: TapGestureRecognizer()..onTap = _backToSignIn,
+                    recognizer: TapGestureRecognizer()..onTap = _onTapSignInScreen,
                     text: " Sign in",
                     style: const TextStyle(
                         color: AppColors.themeColor,
@@ -195,41 +195,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  void _backToSignIn() {
-    if (mounted) {
-      Navigator.pop(context);
+
+
+  Future<void> _onTapSignUp() async {
+    final SignUpController controller = Get.find<SignUpController>();
+    bool result =
+        await controller.signUp(_emailTEController.text.trim(), _fNameTEController.text.trim(), _lNameTEController.text.trim(), _mobileTEController.text.trim(), _passwordTEController.text);
+    if(result){
+      _textFieldClear();
+      if(mounted){
+        showSnackBarMessage(context, 'Sign Up success!');
+      }
+    }else{
+      if(mounted){
+        showSnackBarMessage(context, 'Sign Up failed! Try again');
+      }
     }
   }
-
-  Future<void> _signUp() async {
-    _signUpInprogress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    Map<String, dynamic> requestData = {
-      "email": _emailTEController.text.trim(),
-      "firstName": _fNameTEController.text.trim(),
-      "lastName": _lNameTEController.text.trim(),
-      "mobile": _mobileTEController.text.trim(),
-      "password": _passwordTEController.text,
-      "photo": ""
-    };
-    final NetworkResponse response =
-        await NetworkCaller.postRequest(Urls.signUp, body: requestData);
-    _signUpInprogress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      _textFieldClear();
-      if (mounted) {
-        showSnackBarMessage(context, 'Registration Success!');
-      }
-    } else {
-      if (mounted) {
-        showSnackBarMessage(context, 'Registration Failed! Try again');
-      }
-    }
+  void _onTapSignInScreen(){
+    Get.back();
   }
 
   void _textFieldClear() {

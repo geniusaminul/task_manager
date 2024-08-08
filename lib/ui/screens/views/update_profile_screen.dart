@@ -1,19 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:task_manager_assignment/data/model/network_response.dart';
-import 'package:task_manager_assignment/data/model/user_model.dart';
-import 'package:task_manager_assignment/data/network_caller/network_caller.dart';
+import 'package:get/get.dart';
+
+
 import 'package:task_manager_assignment/ui/controller/auth_controller.dart';
+import 'package:task_manager_assignment/ui/controller/update_profile_task_controller.dart';
 import 'package:task_manager_assignment/ui/utilities/app_constant.dart';
 import 'package:task_manager_assignment/ui/widget/background_widget.dart';
 import 'package:task_manager_assignment/ui/widget/center_circular_progress_indicator.dart';
 import 'package:task_manager_assignment/ui/widget/profile_app_bar.dart';
 import 'package:task_manager_assignment/ui/widget/snack_bar_message.dart';
-
-import '../../../data/utilities/urls.dart';
 
 class UpdateProfileScreen extends StatefulWidget {
   const UpdateProfileScreen({super.key});
@@ -30,8 +25,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final TextEditingController _passwordTEController = TextEditingController();
   final GlobalKey<FormState> _globalKey = GlobalKey<FormState>();
   bool _showPassword = false;
-  bool _profileUpdateInProgress = false;
-  XFile? _selectedImage;
 
   @override
   void initState() {
@@ -158,18 +151,17 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                 ? Icons.remove_red_eye
                                 : Icons.visibility_off),
                           )),
-
                     ),
                     const SizedBox(
                       height: 16,
                     ),
                     Visibility(
-                      visible: _profileUpdateInProgress == false,
+                      visible: Get.find<UpdateProfileTaskController>().updateProfileTaskInProgress == false,
                       replacement: circularProgressIndicator(),
                       child: ElevatedButton(
                           onPressed: () {
                             if (_globalKey.currentState!.validate()) {
-                              _updateProfile();
+                              onTapUpdateProfile();
                             }
                           },
                           child: const Icon(Icons.arrow_circle_right_outlined)),
@@ -189,7 +181,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   Widget imagePickerSection() {
     return GestureDetector(
-      onTap: _profileImagePicker,
+      onTap: Get.find<UpdateProfileTaskController>().profileImagePicker,
       child: Container(
         width: double.maxFinite,
         height: 48,
@@ -219,7 +211,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
             ),
             Expanded(
                 child: Text(
-              _selectedImage?.name ?? 'No image select',
+              Get.find<UpdateProfileTaskController>().selectedImage?.name ??
+                  'No image select',
               maxLines: 1,
             ))
           ],
@@ -228,58 +221,23 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     );
   }
 
-  Future<void> _updateProfile() async {
-    _profileUpdateInProgress = true;
-    String? encodePhoto = AuthController.userModel?.photo;
-    if (mounted) {
-      setState(() {});
-    }
-    Map<String, dynamic> requestData = {
-      "email": _emailTEController.text.trim(),
-      "firstName": _fNameTEController.text.trim(),
-      "lastName": _lNameTEController.text.trim(),
-      "mobile": _mobileTEController.text.trim(),
-    };
-    if (_passwordTEController.text.isNotEmpty) {
-      requestData['password'] = _passwordTEController.text;
-    }
-    if (_selectedImage != null) {
-      File file = File(_selectedImage!.path);
-      encodePhoto = base64Encode(file.readAsBytesSync());
-      requestData['photo'] = encodePhoto;
-    }
-    final NetworkResponse response =
-        await NetworkCaller.postRequest(Urls.profileUpdate, body: requestData);
-    _profileUpdateInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess && response.responseData['status'] == 'success') {
-      UserModel userModel = UserModel(
-          photo: encodePhoto,
-          firstName: _fNameTEController.text.trim(),
-          lastName: _lNameTEController.text.trim(),
-          mobile: _mobileTEController.text.trim(),
-          email: _emailTEController.text);
-      await AuthController.saveUserData(userModel);
+  Future<void> onTapUpdateProfile() async {
+    final UpdateProfileTaskController controller =
+        Get.find<UpdateProfileTaskController>();
+    bool result = await controller.updateProfile(
+      _emailTEController.text.trim(),
+      _fNameTEController.text.trim(),
+      _lNameTEController.text.trim(),
+      _mobileTEController.text.trim(),
+      _passwordTEController.text,
+    );
+    if (result) {
       if (mounted) {
-        showSnackBarMessage(context, 'Profile Updated!');
+        showSnackBarMessage(context, 'Profile update!');
       }
     } else {
       if (mounted) {
-        showSnackBarMessage(context, 'Profile Updated Failed! Try again');
-      }
-    }
-  }
-
-  Future<void> _profileImagePicker() async {
-    final imagePicker = ImagePicker();
-    final XFile? result =
-        await imagePicker.pickImage(source: ImageSource.camera);
-    if (result != null) {
-      _selectedImage = result;
-      if (mounted) {
-        setState(() {});
+        showSnackBarMessage(context, controller.errorMessage);
       }
     }
   }

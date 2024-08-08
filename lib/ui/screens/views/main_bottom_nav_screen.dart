@@ -44,12 +44,9 @@ final List<Widget> _screens = const [
 
         },
 
-
-
-
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'New Task'),
-          BottomNavigationBarItem(icon: Icon(Icons.check), label: 'Complete'),
+          BottomNavigationBarItem(icon: Icon(Icons.check), label: 'Completed'),
           BottomNavigationBarItem(icon: Icon(Icons.timelapse_outlined), label: 'Progress'),
           BottomNavigationBarItem(icon: Icon(Icons.cancel_outlined), label: 'Canceled'),
         ],

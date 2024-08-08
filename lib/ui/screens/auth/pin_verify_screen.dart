@@ -1,22 +1,21 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:task_manager_assignment/ui/screens/auth/set_password_screen.dart';
+import 'package:task_manager_assignment/ui/controller/pin_verify_controller.dart';
+
 import 'package:task_manager_assignment/ui/screens/auth/sign_in_screen.dart';
 
 import 'package:task_manager_assignment/ui/widget/background_widget.dart';
 import 'package:task_manager_assignment/ui/widget/center_circular_progress_indicator.dart';
 
-import '../../../data/model/network_response.dart';
-import '../../../data/network_caller/network_caller.dart';
-import '../../../data/utilities/urls.dart';
 import '../../utilities/app_colors.dart';
 import '../../widget/snack_bar_message.dart';
 
 class PinVerifyScreen extends StatefulWidget {
   const PinVerifyScreen({super.key, required this.userEmail});
-  final String userEmail;
 
+  final String userEmail;
 
   @override
   State<PinVerifyScreen> createState() => _PinVerifyScreenState();
@@ -25,7 +24,6 @@ class PinVerifyScreen extends StatefulWidget {
 class _PinVerifyScreenState extends State<PinVerifyScreen> {
   final TextEditingController _pinTEController = TextEditingController();
   final GlobalKey<FormState> _globalKey = GlobalKey<FormState>();
-  bool _pinVerifyInProgress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +60,9 @@ class _PinVerifyScreenState extends State<PinVerifyScreen> {
                       height: 16,
                     ),
                     Visibility(
-                      visible: _pinVerifyInProgress == false,
+                      visible:
+                          Get.find<PinVerifyController>().pinVerifyInProgress ==
+                              false,
                       replacement: circularProgressIndicator(),
                       child: ElevatedButton(
                           onPressed: () {
@@ -132,47 +132,25 @@ class _PinVerifyScreenState extends State<PinVerifyScreen> {
   }
 
   void _backSignInScreen() {
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SignInScreen(),
-        ),
-        (route) => false,
-      );
-    }
+    Get.offAll( const SignInScreen());
   }
 
-  Future<void> _recoverOtp() async{
-    _pinVerifyInProgress = true;
-    if(mounted){
-      setState(() {
+  Future<void> _recoverOtp() async {
+    final PinVerifyController controller = Get.find<PinVerifyController>();
+    bool result =
+        await controller.pinVerify(_pinTEController.text, widget.userEmail);
 
-      });
-    }
-     String otp = _pinTEController.text.trim();
-    NetworkResponse response = await NetworkCaller.getRequest(Urls.recoverOtp(widget.userEmail, otp));
-    if(response.isSuccess){
+    if (result) {
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SetPasswordScreen(userEmail: widget.userEmail, otp: otp,),
-          ),
-        );
+        showSnackBarMessage(context, 'Pin verify success!');
       }
-    }else{
-      if(mounted){
-        showSnackBarMessage(context, response.errorMessage ?? 'Pin verify Failed! try again');
+    } else {
+      if (mounted) {
+        showSnackBarMessage(context, 'Pin verify Failed! try again');
       }
-    }
-    _pinVerifyInProgress = false;
-    if(mounted){
-      setState(() {
-
-      });
     }
   }
+
   @override
   void dispose() {
     super.dispose();
